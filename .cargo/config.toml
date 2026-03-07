@@ -1,0 +1,12 @@
+[env]
+
+
+[alias]
+rr = "r -r"
+br = "b -r"
+x  = "rr --"
+
+
+[build]
+# See https://doc.rust-lang.org/cargo/reference/config.html#buildtarget for more details on the `target` option.
+# target = "host-tuple"
