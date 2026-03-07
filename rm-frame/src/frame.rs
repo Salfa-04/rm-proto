@@ -83,8 +83,6 @@ impl<V: Validator> Messager<V> {
     ///   `need` is the minimum required size in bytes.
     /// - [`PackError::InvalidPayloadSize`] — the marshaler returned a byte
     ///   count that does not equal [`crate::Marshaler::PAYLOAD_SIZE`].
-    /// - [`PackError::InputTooLarge`] — the marshaler returned a byte count
-    ///   exceeding `u16::MAX`.
     /// - [`PackError::MarshalerError`] — the marshaler itself failed.
     pub fn pack<M: ImplMarshal>(&mut self, msg: &M, dst: &mut [u8]) -> Result<usize, PackError> {
         let mut cursor: usize = 0;
@@ -102,11 +100,7 @@ impl<V: Validator> Messager<V> {
         let size = msg.marshal(&mut dst[payload_offset..payload_offset + payload_size])?;
 
         // Validate payload length.
-        if size > u16::MAX as usize {
-            return Err(PackError::InputTooLarge {
-                max: u16::MAX as usize,
-            });
-        } else if size != payload_size {
+        if size != payload_size {
             return Err(PackError::InvalidPayloadSize {
                 expected: M::PAYLOAD_SIZE as usize,
                 found: size,
@@ -263,11 +257,8 @@ impl<V: Validator> Messager<V> {
     ///
     /// - Returns [`UnPackError`] for any framing or CRC failure (see [`unpack`](Self::unpack)).
     /// - Returns [`UnPackError::MarshalerError`] if command ID or payload size
-    /// does not match `M`, or if [`M::unmarshal`](crate::Marshaler::unmarshal) fails.
-    pub fn unmarshal<'t, M: ImplUnMarshal>(
-        &self,
-        src: &'t [u8],
-    ) -> Result<(M, usize), UnPackError> {
+    ///   does not match `M`, or if [`M::unmarshal`](crate::Marshaler::unmarshal) fails.
+    pub fn unmarshal<M: ImplUnMarshal>(&self, src: &[u8]) -> Result<(M, usize), UnPackError> {
         let (frame, cursor) = self.unpack(src)?;
         Ok((frame.unmarshal::<M>()?, cursor))
     }

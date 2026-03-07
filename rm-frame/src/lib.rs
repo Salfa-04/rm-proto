@@ -44,6 +44,11 @@
 //! +--------+--------+--------+--------+--------+---------+--------+
 //! ```
 //!
+//! # Protocol Source
+//!
+//! See RoboMaster Resources Hub for official documentation and protocol details:
+//! [RMU Communication Protocol](https://bbs.robomaster.com/wiki/20204847/811363)
+//!
 
 #![cfg_attr(not(test), no_std)]
 

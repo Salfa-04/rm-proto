@@ -29,6 +29,53 @@ pub enum MarshalerError {
     ///
     /// `need` is the minimum buffer size required, in bytes.
     BufferTooSmall { need: usize },
+
+    /// An error specific to the payload type prevented successful marshaling or unmarshaling.
+    ///
+    /// This is a catch-all variant for errors that do not fit into the above categories.
+    /// The inner error type and message are determined by the specific implementation of
+    /// [`Marshaler::marshal`](crate::Marshaler::marshal) or
+    /// [`Marshaler::unmarshal`](crate::Marshaler::unmarshal).
+    Unexpected { code: usize, message: &'static str },
+}
+
+impl From<()> for MarshalerError {
+    fn from(_: ()) -> Self {
+        Self::Unexpected {
+            code: 0,
+            message: "Unit Type Error",
+        }
+    }
+}
+
+impl From<usize> for MarshalerError {
+    fn from(code: usize) -> Self {
+        Self::Unexpected {
+            code,
+            message: "Unexpected Error",
+        }
+    }
+}
+
+impl From<(usize,)> for MarshalerError {
+    fn from((code,): (usize,)) -> Self {
+        Self::Unexpected {
+            code,
+            message: "Unexpected Error",
+        }
+    }
+}
+
+impl From<(&'static str, usize)> for MarshalerError {
+    fn from((message, code): (&'static str, usize)) -> Self {
+        Self::Unexpected { code, message }
+    }
+}
+
+impl From<(usize, &'static str)> for MarshalerError {
+    fn from((code, message): (usize, &'static str)) -> Self {
+        Self::Unexpected { code, message }
+    }
 }
 
 /// Errors returned by [`Messager::pack`](crate::Messager::pack).
@@ -40,11 +87,6 @@ pub enum PackError {
     /// `need` is the minimum required size in bytes:
     /// `5 (header) + 2 (CMD_ID) + PAYLOAD_SIZE + 2 (CRC16)`.
     BufferTooSmall { need: usize },
-
-    /// The marshaler returned a byte count exceeding `u16::MAX`.
-    ///
-    /// `max` is `u16::MAX`. This indicates a broken [`Marshaler`](crate::Marshaler) implementation.
-    InputTooLarge { max: usize },
 
     /// The marshaler returned a byte count that does not equal
     /// [`Marshaler::PAYLOAD_SIZE`](crate::Marshaler::PAYLOAD_SIZE).
@@ -148,6 +190,13 @@ impl Display for MarshalerError {
             Self::BufferTooSmall { need } => {
                 write!(f, "Buffer too Small: need {} bytes", need)
             }
+            Self::Unexpected { code, message } => {
+                write!(
+                    f,
+                    "Unexpected Marshaler Error: code {}, message: {}",
+                    code, message
+                )
+            }
         }
     }
 }
@@ -157,9 +206,6 @@ impl Display for PackError {
         match self {
             Self::BufferTooSmall { need } => {
                 write!(f, "Buffer too Small: need {} bytes", need)
-            }
-            Self::InputTooLarge { max } => {
-                write!(f, "Input too Large: max {} bytes", max)
             }
             Self::InvalidPayloadSize { expected, found } => {
                 write!(

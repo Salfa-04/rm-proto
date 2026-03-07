@@ -24,6 +24,12 @@ pub trait Marshaler: Sized {
     ///
     /// Returns the number of bytes written on success.
     ///
+    /// # Notes
+    ///
+    /// If called manually, the caller must ensure
+    /// that the destination buffer is large enough
+    /// to hold the serialized payload.
+    ///
     /// # Errors
     ///
     /// Returns an error if the destination buffer
