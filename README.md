@@ -291,3 +291,5 @@ async fn handler() -> ! {
 ## Reference
 
 This library implements the **RoboMaster University Series 2026 Communication Protocol V1.2.0** (2026-02-09).
+
+See RoboMaster Resources Hub for official documentation and protocol details:[RMU Communication Protocol](https://bbs.robomaster.com/wiki/20204847/811363)

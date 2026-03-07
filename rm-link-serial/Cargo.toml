@@ -1,12 +1,10 @@
 [package]
 name = "rm-link-serial"
 
-version.workspace     = true
-edition.workspace     = true
-publish.workspace     = true
-authors.workspace     = true
-readme.workspace      = true
-description.workspace = true
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+authors.workspace = true
 
 
 [dependencies]
