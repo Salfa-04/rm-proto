@@ -3,7 +3,7 @@ resolver = "3"
 
 package.version      = "0.0.0"
 package.edition      = "2024"
-package.publish      = ["rm-frame"]
+package.publish      = false
 package.authors      = ["Salfa Chang <me@salfa.cn>"]
 package.rust-version = "1.85"
 package.readme       = "README.md"
