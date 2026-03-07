@@ -1,12 +1,16 @@
 [workspace]
 resolver = "3"
 
-package.version     = "0.0.0"
-package.edition     = "2024"
-package.publish     = false
-package.authors     = ["Salfa Chang <me@salfa.cn>"]
-package.readme      = "README.md"
-package.description = "A Rust implementation of DJI RoboMaster Protocol, including frame parsing and link management."
+package.version      = "0.0.0"
+package.edition      = "2024"
+package.publish      = ["rm-frame"]
+package.authors      = ["Salfa Chang <me@salfa.cn>"]
+package.rust-version = "1.85"
+package.readme       = "README.md"
+package.description  = "A Rust implementation of DJI RoboMaster Protocol, including frame parsing and link management."
+
+package.homepage   = "https://github.com/Salfa-04/rm-proto"
+package.repository = "https://github.com/Salfa-04/rm-proto"
 
 default-members = ["rm-frame"]
 
@@ -19,9 +23,6 @@ release.debug = false
 
 
 [workspace.dependencies]
-# dji-frame       = { path = "dji-frame" }
-# portable-atomic = { version = "1", features = ["float"] }
-
 rm-frame = { path = "rm-frame" }
 
 
