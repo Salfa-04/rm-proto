@@ -24,8 +24,8 @@ atomic = { workspace = true, optional = true }
 
 
 [package.metadata.docs.rs]
-features     = ["defmt", "remote"]
 rustdoc-args = ["--cfg", "docsrs"]
+all-features = true
 
 [features]
 defmt  = ["dep:defmt"]
