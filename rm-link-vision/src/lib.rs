@@ -1,19 +1,14 @@
 #![cfg_attr(not(test), no_std)]
 
 pub use custom::Custom2Robot;
-pub use remote::{RemoteControl, Switch};
 
 /// 0x0302 - Custom to Robot
 mod custom;
 
-/// Receiver to Controlled Robot
-mod remote;
-
 mod private {
     pub type Result<T, E = Error> = core::result::Result<T, E>;
-    pub use portable_atomic::{AtomicU16, AtomicU64, Ordering::Relaxed};
+    pub use rm_frame::MarshalerError as Error;
     pub use rm_frame::{ImplCommandMsg, ImplUnMarshal};
-    pub use rm_frame::{MarshalerError as Error, UnPackError, calc_dji16};
 }
 
 #[cfg(test)]

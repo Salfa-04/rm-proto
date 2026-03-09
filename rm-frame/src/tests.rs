@@ -1,5 +1,5 @@
-use crate::ImplCommandMsg;
 use crate::{DjiValidator, Marshaler, Messager};
+use crate::{ImplCommandMsg, RemoteControl, Switch};
 use crate::{MarshalerError, PackError, UnPackError};
 use crate::{calc_dji8, calc_dji16};
 
@@ -408,4 +408,187 @@ fn test_skip_values() {
         UnPackError::MarshalerError(MarshalerError::from(0usize)).skip(),
         0
     );
+}
+
+fn build_vt13_frame(
+    ch0: u16,
+    ch1: u16,
+    ch2: u16,
+    ch3: u16,
+    switch: u8,
+    pause: bool,
+    left_fn: bool,
+    right_fn: bool,
+    wheel: u16,
+    trigger: bool,
+    mouse_vx: i16,
+    mouse_vy: i16,
+    mouse_vz: i16,
+    left_button_bits: u8,
+    right_button_bits: u8,
+    mid_button_bits: u8,
+    keyboard_mask: u16,
+) -> [u8; 21] {
+    const SOF: u16 = 0x53A9;
+    const FRAME_LEN: usize = 21;
+
+    let mut frame = [0u8; FRAME_LEN];
+
+    let mut datagroup1 = 0u64;
+    datagroup1 |= (ch0 as u64) & 0x7FF;
+    datagroup1 |= ((ch1 as u64) & 0x7FF) << 11;
+    datagroup1 |= ((ch2 as u64) & 0x7FF) << 22;
+    datagroup1 |= ((ch3 as u64) & 0x7FF) << 33;
+    datagroup1 |= ((switch as u64) & 0x3) << 44;
+    datagroup1 |= (pause as u64) << 46;
+    datagroup1 |= (left_fn as u64) << 47;
+    datagroup1 |= (right_fn as u64) << 48;
+    datagroup1 |= ((wheel as u64) & 0x7FF) << 49;
+    datagroup1 |= (trigger as u64) << 60;
+
+    let mut datagroup2 = 0u64;
+    datagroup2 |= (mouse_vx as u16 as u64) & 0xFFFF;
+    datagroup2 |= ((mouse_vy as u16 as u64) & 0xFFFF) << 16;
+    datagroup2 |= ((mouse_vz as u16 as u64) & 0xFFFF) << 32;
+    datagroup2 |= ((left_button_bits as u64) & 0x3) << 48;
+    datagroup2 |= ((right_button_bits as u64) & 0x3) << 50;
+    datagroup2 |= ((mid_button_bits as u64) & 0x3) << 52;
+
+    frame[0..2].copy_from_slice(&SOF.to_le_bytes());
+    frame[2..10].copy_from_slice(&datagroup1.to_le_bytes());
+    frame[10..17].copy_from_slice(&datagroup2.to_le_bytes()[..7]);
+    frame[17..19].copy_from_slice(&keyboard_mask.to_le_bytes());
+
+    let crc = calc_dji16(&frame[..19]);
+    frame[19..21].copy_from_slice(&crc.to_le_bytes());
+
+    frame
+}
+
+#[test]
+fn test_remote_update_decodes_full_payload() {
+    const MID: i16 = 1024;
+
+    let rc: RemoteControl<DjiValidator> = RemoteControl::new();
+    let frame = build_vt13_frame(
+        (MID + 100) as u16,
+        (MID - 200) as u16,
+        (MID + 300) as u16,
+        (MID - 400) as u16,
+        Switch::N as u8,
+        true,
+        false,
+        true,
+        (MID + 123) as u16,
+        true,
+        -1234,
+        2345,
+        -32768,
+        0b01,
+        0b10,
+        0b11,
+        (1 << 0) | (1 << 5) | (1 << 15),
+    );
+
+    let consumed = rc.update(&frame).unwrap();
+    assert_eq!(consumed, 21);
+
+    assert_eq!(rc.right_horizontal(), 100);
+    assert_eq!(rc.right_vertical(), -200);
+    assert_eq!(rc.left_vertical(), 300);
+    assert_eq!(rc.left_horizontal(), -400);
+    assert_eq!(rc.switch(), Switch::N);
+    assert!(rc.pause());
+    assert!(!rc.left_fn());
+    assert!(rc.right_fn());
+    assert_eq!(rc.wheel(), 123);
+    assert!(rc.trigger());
+
+    assert_eq!(rc.mouse_vx(), -1234);
+    assert_eq!(rc.mouse_vy(), 2345);
+    assert_eq!(rc.mouse_vz(), -32768);
+    assert!(rc.left_button());
+    assert!(rc.right_button());
+    assert!(rc.mid_button());
+
+    assert!(rc.keyboard_w());
+    assert!(rc.keyboard_ctrl());
+    assert!(rc.keyboard_b());
+    assert!(!rc.keyboard_shift());
+    assert!(!rc.keyboard_a());
+}
+
+#[test]
+fn test_remote_update_rejects_short_frame() {
+    let rc: RemoteControl<DjiValidator> = RemoteControl::new();
+    let short = [0u8; 20];
+
+    assert!(matches!(
+        rc.update(&short),
+        Err(UnPackError::UnexpectedEnd { read: 20 })
+    ));
+}
+
+#[test]
+fn test_remote_update_rejects_bad_sof() {
+    const MID: i16 = 1024;
+
+    let rc: RemoteControl<DjiValidator> = RemoteControl::new();
+    let mut frame = build_vt13_frame(
+        MID as u16,
+        MID as u16,
+        MID as u16,
+        MID as u16,
+        Switch::C as u8,
+        false,
+        false,
+        false,
+        MID as u16,
+        false,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    );
+
+    frame[0] ^= 0xFF;
+    assert!(matches!(
+        rc.update(&frame),
+        Err(UnPackError::MissingHeader { skip: 1 })
+    ));
+}
+
+#[test]
+fn test_remote_update_rejects_bad_crc() {
+    const MID: i16 = 1024;
+
+    let rc: RemoteControl<DjiValidator> = RemoteControl::new();
+    let mut frame = build_vt13_frame(
+        MID as u16,
+        MID as u16,
+        MID as u16,
+        MID as u16,
+        Switch::S as u8,
+        false,
+        false,
+        false,
+        MID as u16,
+        false,
+        10,
+        20,
+        30,
+        0,
+        0,
+        0,
+        0,
+    );
+
+    frame[20] ^= 0x01;
+    assert!(matches!(
+        rc.update(&frame),
+        Err(UnPackError::InvalidChecksum { at: 19 })
+    ));
 }

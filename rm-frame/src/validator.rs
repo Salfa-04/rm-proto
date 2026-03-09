@@ -7,6 +7,7 @@ use crate::{calc_dji8, calc_dji16};
 /// - CRC8 for the frame header
 /// - CRC16 for the frame body
 ///
+#[doc(alias("CrcValidator", "FrameValidator", "IntegrityChecker"))]
 pub trait Validator {
     ///
     /// Calculate CRC8 over the given raw bytes.
@@ -29,6 +30,7 @@ pub trait Validator {
 /// This implementation uses DJI-compatible CRC8 and CRC16
 /// algorithms for frame validation.
 ///
+#[doc(alias("DefaultValidator", "DJIValidator"))]
 pub struct DjiValidator;
 
 impl Validator for DjiValidator {

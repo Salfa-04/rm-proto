@@ -6,9 +6,9 @@ A `no_std`, allocation-free Rust implementation of the RoboMaster referee system
 
 | Crate | Description |
 | --- | --- |
-| `rm-frame` | Core framing layer: CRC, encode/decode, error types |
+| `rm-frame` | Core framing layer: CRC, encode/decode, error types, optional remote control |
 | `rm-link-serial` | Referee system serial protocol messages |
-| `rm-link-vision` | Vision link messages and RC receiver |
+| `rm-link-vision` | Vision link messages (`Custom2Robot`) |
 
 ## Frame Format
 
@@ -25,10 +25,10 @@ A `no_std`, allocation-free Rust implementation of the RoboMaster referee system
 | SOF | Start of frame marker: `0xA5` |
 | LEN | Payload length, little-endian `u16` |
 | SEQ | Sequence number, wrapping `u8` |
-| CRC8 | CRC8/MAXIM-DOW over `[SOF, LEN, SEQ]`, initial value `0xFF` |
+| CRC8 | CRC8/DJI over `[SOF, LEN, SEQ]`, initial value `0xFF` |
 | CMD_ID | Command ID, little-endian `u16` |
 | DATA | Payload bytes |
-| CRC16 | CRC16/CCITT-FALSE over the entire preceding frame, initial value `0xFFFF` |
+| CRC16 | CRC16/DJI over the entire preceding frame, initial value `0xFFFF` |
 
 Minimum frame size (empty payload): **9 bytes**.
 
@@ -91,7 +91,7 @@ let crc16 = calc_dji16(&data);
 
 ## rm-link-serial
 
-All referee system messages implement the full `Marshaler` trait (encode + decode).
+Some referee system messages implement the full `Marshaler` trait (encode + decode).
 
 ### Messages
 
@@ -138,14 +138,27 @@ let joints = cmd.get_joints(); // &[f32; 6]
 let gripper = cmd.get_gripper(); // bool
 ```
 
-### `RemoteControl` — DT7/DR16 RC Receiver, 21-byte frame
+---
 
-Decodes the DT7/DR16 RC receiver data stream. Uses its own framing (SOF `0xA953` + CRC16 tail), separate from the standard `Messager` format.
+## Feature Flags
 
-State is stored in `portable_atomic` atomics, making it safe to share across tasks without a mutex.
+| Feature | Crates | Effect |
+| --- | --- | --- |
+| `defmt` | all | Derives `defmt::Format` on error types and key enums for embedded structured logging |
+| `remote` | `rm-frame` | Enables [`RemoteControl`] for decoding VT03/VT13 uplink control frames |
+
+---
+
+## `no_std` Support
+
+All crates are `#![no_std]` with no heap allocation. They can be used directly in bare-metal and RTOS environments.
+
+## Remote Control (Optional)
+
+When the `remote` feature is enabled, `rm-frame` provides [`RemoteControl`] to decode DT7/DR16 RC receiver frames from VT03/VT13 vision links.
 
 ```rust
-use rm_link_vision::RemoteControl;
+use rm_frame::RemoteControl;
 
 let rc = RemoteControl::new();
 
@@ -171,21 +184,9 @@ let vx = rc.mouse_vx();         // i16
 
 ---
 
-## Feature Flags
-
-| Feature | Crates | Effect |
-| --- | --- | --- |
-| `defmt` | all | Derives `defmt::Format` on error types and key enums for embedded structured logging |
-
----
-
-## `no_std` Support
-
-All crates are `#![no_std]` with no heap allocation. They can be used directly in bare-metal and RTOS environments.
-
 ## Examples
 
-```rust
+```rust,ignore
 static SIG_BUFFER: Signal<RawMutex, ([u8; 64], usize)> = Signal::new();
 pub static RC: RemoteControl = unsafe { RemoteControl::const_new() };
 
@@ -249,7 +250,7 @@ async fn handler() -> ! {
                 match frame.cmd_id() {
                     Custom2Robot::CMD_ID => match frame.unmarshal::<Custom2Robot>() {
                         Ok(x) => {
-                            do_sth_ext((x.get_joints(), x.get_gripper()));
+                            do_sth_external(&x);
                         }
                         Err(e) => {
                             defmt::warn!("Custom2Robot Error: {:?}", e);
@@ -292,4 +293,5 @@ async fn handler() -> ! {
 
 This library implements the **RoboMaster University Series 2026 Communication Protocol V1.2.0** (2026-02-09).
 
-See RoboMaster Resources Hub for official documentation and protocol details:[RMU Communication Protocol](https://bbs.robomaster.com/wiki/20204847/811363)
+See RoboMaster Resources Hub for official documentation and protocol details:
+[RMU Communication Protocol](https://bbs.robomaster.com/wiki/20204847/811363)

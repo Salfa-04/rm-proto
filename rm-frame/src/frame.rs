@@ -45,9 +45,9 @@ const TAIL_SIZE: usize = size_of::<u16>();
 /// - `CMD_ID`: command identifier, little-endian `u16`
 /// - `DATA`: payload bytes (N = [`crate::Marshaler::PAYLOAD_SIZE`])
 /// - `CRC16`: checksum over the entire frame preceding this field
-///
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[doc(alias("Msg", "Msger", "MessageParser", "FrameParser"))]
 pub struct Messager<V: Validator = DjiValidator> {
     /// Current frame sequence number.
     sequence: u8,
@@ -278,6 +278,7 @@ impl<V: Validator> Messager<V> {
 /// The payload slice borrows from that buffer with no copying.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[doc(alias("Frame", "RawMessage", "RawMsg"))]
 pub struct RawFrame<'t> {
     /// Command ID of the frame.
     pub(crate) cmd_id: u16,
@@ -300,7 +301,7 @@ impl<'t> RawFrame<'t> {
 
     /// Decode the payload into a typed message.
     ///
-    /// Verifies that the frame's command ID matches [`Marshaler::CMD_ID`] and that the
+    /// Verifies that the frame's command ID matches [`crate::Marshaler::CMD_ID`] and that the
     /// payload length matches `M::PAYLOAD_SIZE`, then delegates to `M::unmarshal`.
     ///
     /// # Errors

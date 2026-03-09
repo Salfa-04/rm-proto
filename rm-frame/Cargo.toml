@@ -1,22 +1,32 @@
 [package]
 name = "rm-frame"
 
-version = "0.1.0"
-license = "MIT OR Apache-2.0"
+version = "0.1.1"
 publish = ["crates-io"]
 
 edition.workspace      = true
 authors.workspace      = true
 rust-version.workspace = true
 readme.workspace       = true
-homepage.workspace     = true
-repository.workspace   = true
 description.workspace  = true
+license.workspace      = true
+
+homepage.workspace      = true
+repository.workspace    = true
+categories.workspace    = true
+keywords.workspace      = true
+documentation.workspace = true
 
 
 [dependencies]
-defmt = { workspace = true, optional = true }
+defmt  = { workspace = true, optional = true }
+atomic = { workspace = true, optional = true }
 
+
+[package.metadata.docs.rs]
+features     = ["defmt", "remote"]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
-defmt = ["dep:defmt"]
+defmt  = ["dep:defmt"]
+remote = ["dep:atomic"]

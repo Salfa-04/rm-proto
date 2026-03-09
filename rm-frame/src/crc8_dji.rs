@@ -1,7 +1,7 @@
 //! CRC8-DJI Checksum Calculation
 
 ///
-/// CRC8/MAXIM-DOW Lookup Table
+/// CRC8/DJI Lookup Table
 ///
 /// G(x) = x^8 + x^5 + x^4 + 1
 ///
@@ -41,6 +41,7 @@ const TABLE: [u8; 256] = [
 ];
 
 /// Calculate CRC8-DJI Checksum
+#[doc(alias("crc8", "crc8-dji", "crc8_dji"))]
 pub fn calculate(data: &[u8]) -> u8 {
     data.iter().fold(0xFF, |crc, &byte| {
         // XOR-in the next input byte

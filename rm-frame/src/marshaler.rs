@@ -13,6 +13,7 @@ type Result<T> = core::result::Result<T, MarshalerError>;
 ///
 /// Each payload type corresponds to exactly one command ID.
 ///
+#[doc(alias("Marshal", "Unmarshal", "Serialize", "Deserialize"))]
 pub trait Marshaler: Sized {
     /// Command ID associated with this payload type.
     const CMD_ID: u16;

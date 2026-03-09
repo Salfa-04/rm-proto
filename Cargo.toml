@@ -9,8 +9,13 @@ package.rust-version = "1.85"
 package.readme       = "README.md"
 package.description  = "A Rust implementation of DJI RoboMaster Protocol, including frame parsing and link management."
 
-package.homepage   = "https://github.com/Salfa-04/rm-proto"
-package.repository = "https://github.com/Salfa-04/rm-proto"
+package.license = "MIT OR Apache-2.0"
+
+package.homepage      = "https://salfa.cn"
+package.repository    = "https://github.com/Salfa-04/rm-proto"
+package.categories    = ["no-std", "encoding", "parsing"]
+package.keywords      = ["RoboMaster", "Robot", "Protocol", "Frame", "Parser"]
+package.documentation = "https://docs.rs/rm-frame"
 
 default-members = ["rm-frame"]
 
@@ -25,6 +30,11 @@ release.debug = false
 [workspace.dependencies]
 rm-frame = { path = "rm-frame" }
 
+
+[workspace.dependencies.atomic]
+package          = "portable-atomic"
+version          = "1.13"
+default-features = false
 
 [workspace.dependencies.defmt]
 version          = "1.0"

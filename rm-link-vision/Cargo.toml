@@ -6,6 +6,17 @@ edition.workspace = true
 publish.workspace = true
 authors.workspace = true
 
+rust-version.workspace = true
+readme.workspace       = true
+description.workspace  = true
+license.workspace      = true
+
+homepage.workspace      = true
+repository.workspace    = true
+categories.workspace    = true
+keywords.workspace      = true
+documentation.workspace = true
+
 
 [dependencies]
 rm-frame = { workspace = true }

@@ -16,19 +16,32 @@ pub enum MarshalerError {
     ///     [`RawFrame::unmarshal`](crate::RawFrame::unmarshal)
     /// when [`M::CMD_ID`](crate::Marshaler::CMD_ID) differs from the
     /// command ID in the decoded frame.
-    InvalidCmdID { expected: u16, found: u16 },
+    InvalidCmdID {
+        /// The expected command ID for the target type.
+        expected: u16,
+        /// The actual command ID found in the frame.
+        found: u16,
+    },
 
     /// The payload length does not match [`Marshaler::PAYLOAD_SIZE`](crate::Marshaler::PAYLOAD_SIZE).
     ///
     /// Returned by
     ///     [`RawFrame::unmarshal`](crate::RawFrame::unmarshal)
     /// when the payload size in the frame differs from the size the target type expects.
-    InvalidDataLength { expected: usize, found: usize },
+    InvalidDataLength {
+        /// The expected payload size for the target type.
+        expected: usize,
+        /// The actual payload size found in the frame.
+        found: usize,
+    },
 
     /// The destination buffer is too small to hold the serialized payload.
     ///
     /// `need` is the minimum buffer size required, in bytes.
-    BufferTooSmall { need: usize },
+    BufferTooSmall {
+        /// The minimum buffer size required, in bytes.
+        need: usize,
+    },
 
     /// An error specific to the payload type prevented successful marshaling or unmarshaling.
     ///
@@ -36,7 +49,12 @@ pub enum MarshalerError {
     /// The inner error type and message are determined by the specific implementation of
     /// [`Marshaler::marshal`](crate::Marshaler::marshal) or
     /// [`Marshaler::unmarshal`](crate::Marshaler::unmarshal).
-    Unexpected { code: usize, message: &'static str },
+    Unexpected {
+        /// The error code that user defined in their marshaler implementation.
+        code: usize,
+        /// The error message that user defined in their marshaler implementation.
+        message: &'static str,
+    },
 }
 
 impl From<()> for MarshalerError {
@@ -83,16 +101,22 @@ impl From<(usize, &'static str)> for MarshalerError {
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum PackError {
     /// The destination buffer is too small to hold the complete frame.
-    ///
-    /// `need` is the minimum required size in bytes:
-    /// `5 (header) + 2 (CMD_ID) + PAYLOAD_SIZE + 2 (CRC16)`.
-    BufferTooSmall { need: usize },
+    BufferTooSmall {
+        /// The minimum required size in bytes:
+        /// `5 (header) + 2 (CMD_ID) + PAYLOAD_SIZE + 2 (CRC16)`.
+        need: usize,
+    },
 
     /// The marshaler returned a byte count that does not equal
     /// [`Marshaler::PAYLOAD_SIZE`](crate::Marshaler::PAYLOAD_SIZE).
     ///
     /// This indicates a broken [`Marshaler`](crate::Marshaler) implementation.
-    InvalidPayloadSize { expected: usize, found: usize },
+    InvalidPayloadSize {
+        /// The expected payload size for the target type.
+        expected: usize,
+        /// The actual payload size returned by the marshaler.
+        found: usize,
+    },
 
     /// The marshaler returned an error.
     MarshalerError(MarshalerError),
@@ -115,25 +139,37 @@ pub enum UnPackError {
     ///
     /// `skip` is the byte offset of the first SOF byte found.
     /// Discard that many bytes from the input, then retry.
-    ReSync { skip: usize },
+    ReSync {
+        /// The byte offset of the first SOF byte found in the input buffer.
+        skip: usize,
+    },
 
     /// No SOF byte was found anywhere in the input buffer.
     ///
     /// `skip` equals the buffer length.
     /// Discard the entire buffer and wait for more data before retrying.
-    MissingHeader { skip: usize },
+    MissingHeader {
+        /// The length of the input buffer, which should be discarded.
+        skip: usize,
+    },
 
     /// The frame is truncated; more bytes are needed to complete it.
     ///
     /// `read` is the number of bytes currently available.
     /// Keep the existing bytes and wait for more data before retrying.
-    UnexpectedEnd { read: usize },
+    UnexpectedEnd {
+        /// The number of bytes currently available in the input buffer.
+        read: usize,
+    },
 
     /// CRC validation failed (header CRC8 or frame CRC16).
     ///
     /// `at` is the cursor position when the failure was detected.
     /// Call [`UnPackError::skip`] to determine how many bytes to discard.
-    InvalidChecksum { at: usize },
+    InvalidChecksum {
+        /// The cursor position in the input buffer where the checksum failure was detected.
+        at: usize,
+    },
 
     /// The payload could not be decoded into the target type.
     ///

@@ -1,7 +1,7 @@
 //! CRC16-DJI Checksum Calculation
 
 ///
-/// CRC16/CCITT-FALSE Lookup Table
+/// CRC16/DJI Lookup Table
 ///
 /// G(x) = x^16 + x^12 + x^5 + 1
 ///
@@ -41,6 +41,7 @@ const TABLE: [u16; 256] = [
 ];
 
 /// Calculate CRC16-DJI Checksum
+#[doc(alias("crc16", "crc16-dji", "crc16_dji"))]
 pub fn calculate(data: &[u8]) -> u16 {
     data.iter().fold(0xFFFF, |crc, &byte| {
         let idx = ((crc ^ (byte as u16)) & 0xff) as usize;
