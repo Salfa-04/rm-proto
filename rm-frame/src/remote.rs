@@ -71,6 +71,7 @@ const RC_CHANNEL_MID: i16 = 1024;
 /// Fixed size of one remote-control frame in bytes.
 const RC_FRAME_LENGTH: usize = 21;
 
+/// Three-position switch state.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[doc(alias("SwitchState", "3PosSwitch", "3WaySwitch"))]
