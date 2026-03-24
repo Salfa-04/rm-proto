@@ -37,6 +37,13 @@ impl ImplUnMarshal for Custom2Robot {
 
         let gripper = raw[24] != 0;
 
+        if raw[28] != 7 || raw[29] != 8 {
+            return Err(Error::Unexpected {
+                code: 1,
+                message: "官方裁判系统数据传输故障",
+            });
+        }
+
         Ok(Custom2Robot { joints, gripper })
     }
 }
